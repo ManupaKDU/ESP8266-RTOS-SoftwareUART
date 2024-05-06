@@ -18,7 +18,7 @@
 
 void app_main(){
   // Initialize Soft UART with a baud rate of 9600
-  if (softuart_open(0, 9600, RX_PIN, TX_PIN, false) == false) {
+  if (softuart_open(0, 74880, RX_PIN, TX_PIN, false) == false) {
     // Handle initialization error here
     return;
   }
@@ -36,7 +36,8 @@ while (1)
     // Process the received byte here
     // For example, print it to the serial monitor:
     // Serial.print(c);
-    ESP_LOGI("SOFTUART", "Data entered: %c", c);
+    // ESP_LOGI("SOFTUART", "Data entered: %c", c);
+    printf("%c",c);
   }
   else
   {
@@ -47,6 +48,6 @@ while (1)
 
   // Optionally add a delay to avoid overwhelming the receiver
   // delay(100);
-  vTaskDelay(500 / portTICK_PERIOD_MS);
+  // vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 }

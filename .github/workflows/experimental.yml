@@ -1,16 +1,13 @@
-name: Install Python 2.7, pip, and ESP8266_RTOS_SDK
+name: Create and Publish Release
 
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - main  # Change this to your desired branch
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest  # Change to ubuntu-24.04 if it becomes available
 
     steps:
     - name: Checkout code
@@ -77,6 +74,7 @@ jobs:
         cd ~/esp
         git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git
         export IDF_PATH=~/esp/ESP8266_RTOS_SDK
+        sed -i 's/pyelftools>=0.22/pyelftools==0.22/' $IDF_PATH/requirements.txt
         python2.7 -m pip install --user -r $IDF_PATH/requirements.txt
 
     - name: Download and Extract xtensa-lx106-elf-gcc
@@ -90,3 +88,22 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE # Navigate back to the project location
         make
+
+    - name: Find and compress .bin files
+      run: |
+        mkdir -p release
+        find . -name "*.bin" -print0 | tar -czvf release/firmware-$(date +'%Y%m%d%H%M%S').tar.gz --null -T -
+
+    - name: Create release tag
+      id: create_release
+      run: |
+        TAG=$(date +'%Y%m%d%H%M%S')
+        gh release create $TAG release/firmware-*.tar.gz -t "Release $TAG" -n "Automated release created on $TAG"
+      env:
+        GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+    - name: Upload compressed file as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: firmware
+        path: release/firmware-*.tar.gz

@@ -74,6 +74,7 @@ jobs:
         cd ~/esp
         git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git
         export IDF_PATH=~/esp/ESP8266_RTOS_SDK
+        sed -i 's/pyelftools>=0.22/pyelftools==0.22/' $IDF_PATH/requirements.txt
         python2.7 -m pip install --user -r $IDF_PATH/requirements.txt
 
     - name: Download and Extract xtensa-lx106-elf-gcc
@@ -99,7 +100,7 @@ jobs:
         TAG=$(date +'%Y%m%d%H%M%S')
         gh release create $TAG release/firmware-*.tar.gz -t "Release $TAG" -n "Automated release created on $TAG"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
     - name: Upload compressed file as artifact
       uses: actions/upload-artifact@v3

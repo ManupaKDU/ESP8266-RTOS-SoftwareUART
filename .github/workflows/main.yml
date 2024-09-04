@@ -1,0 +1,48 @@
+name: Install Python 2.7 and pip
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Update and upgrade the system
+      run: sudo apt update && sudo apt upgrade -y
+
+    - name: Install Dependencies
+      run: |
+        sudo apt install -y build-essential checkinstall libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev
+
+    - name: Download Python 2.7 Source Code
+      run: |
+        wget https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+        tar -xvf Python-2.7.18.tgz
+
+    - name: Compile and Install Python 2.7
+      run: |
+        cd Python-2.7.18
+        ./configure --enable-optimizations
+        make
+        sudo make install
+
+    - name: Verify Python Installation
+      run: python2.7 -V
+
+    - name: Install pip for Python 2.7
+      run: |
+        sudo apt install -y curl
+        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+        sudo python2.7 get-pip.py
+
+    - name: Verify pip Installation
+      run: pip2.7 --version

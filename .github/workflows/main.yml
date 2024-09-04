@@ -1,0 +1,92 @@
+name: Install Python 2.7, pip, and ESP8266_RTOS_SDK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Cache Python packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: python-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          python-${{ runner.os }}-
+
+    - name: Cache Python 2.7 Source
+      uses: actions/cache@v3
+      with:
+        path: ~/Python-2.7.18
+        key: python2-source-${{ runner.os }}-${{ hashFiles('**/Python-2.7.18.tgz') }}
+        restore-keys: |
+          python2-source-${{ runner.os }}-
+
+    - name: Cache xtensa toolchain
+      uses: actions/cache@v3
+      with:
+        path: ~/esp/xtensa-lx106-elf
+        key: xtensa-${{ runner.os }}-${{ hashFiles('**/xtensa-lx106-elf-gcc8_4_0-esp-2020r3-linux-amd64.tar.gz') }}
+        restore-keys: |
+          xtensa-${{ runner.os }}-
+
+    - name: Update and upgrade the system
+      run: sudo apt update && sudo apt upgrade -y
+
+    - name: Install Dependencies
+      run: |
+        sudo apt install -y build-essential checkinstall libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev
+
+    - name: Download Python 2.7 Source Code
+      run: |
+        wget https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+        tar -xvf Python-2.7.18.tgz
+
+    - name: Compile and Install Python 2.7
+      run: |
+        cd Python-2.7.18
+        ./configure --enable-optimizations
+        make
+        sudo make install
+
+    - name: Verify Python Installation
+      run: python2.7 -V
+
+    - name: Install pip for Python 2.7
+      run: |
+        sudo apt install -y curl
+        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+        sudo python2.7 get-pip.py
+
+    - name: Verify pip Installation
+      run: pip2.7 --version
+
+    - name: Clone ESP8266_RTOS_SDK Repository
+      run: |
+        mkdir -p ~/esp
+        cd ~/esp
+        git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git
+        export IDF_PATH=~/esp/ESP8266_RTOS_SDK
+        python2.7 -m pip install --user -r $IDF_PATH/requirements.txt
+
+    - name: Download and Extract xtensa-lx106-elf-gcc
+      run: |
+        cd ~/esp
+        wget -c https://dl.espressif.com/dl/xtensa-lx106-elf-gcc8_4_0-esp-2020r3-linux-amd64.tar.gz
+        tar -xzf xtensa-lx106-elf-gcc8_4_0-esp-2020r3-linux-amd64.tar.gz
+        export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"
+
+    - name: Run Make
+      run: |
+        cd $GITHUB_WORKSPACE # Navigate back to the project location
+        make

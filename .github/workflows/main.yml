@@ -106,7 +106,7 @@ jobs:
         GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
     - name: Upload compressed file as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: firmware
         path: release/firmware-*.tar.gz
